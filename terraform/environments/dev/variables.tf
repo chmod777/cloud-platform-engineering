@@ -9,3 +9,9 @@ variable "region" {
   type        = string
   default     = "europe-west9"
 }
+
+variable "lab_enabled" {
+  description = "Create the temporary management VM only during a lab session"
+  type        = bool
+  default     = false
+}

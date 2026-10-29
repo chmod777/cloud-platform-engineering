@@ -22,3 +22,13 @@ override.tf.json
 *.pem
 *.key
 *credentials*.json
+
+# Local lab execution and plan artifacts
+.lab-lock/
+.lab-tmp.*/
+*.plan.json
+.DS_Store
+
+# Python local caches
+__pycache__/
+*.pyc

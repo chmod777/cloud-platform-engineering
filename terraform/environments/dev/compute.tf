@@ -1,4 +1,6 @@
 resource "google_compute_instance" "mgmt_vm" {
+  count = var.lab_enabled ? 1 : 0
+
   name         = "vm-mgmt-01"
   machine_type = "e2-micro"
   zone         = "europe-west1-b"
@@ -6,6 +8,7 @@ resource "google_compute_instance" "mgmt_vm" {
   tags = ["mgmt-server"]
 
   boot_disk {
+    auto_delete = true
     initialize_params {
       image = "debian-cloud/debian-12"
       size  = 10
@@ -38,4 +41,10 @@ resource "google_compute_instance" "mgmt_vm" {
     environment = "dev"
     managed_by  = "terraform"
   }
+}
+
+# Preserve an existing VM address when enabling the optional instance.
+moved {
+  from = google_compute_instance.mgmt_vm
+  to   = google_compute_instance.mgmt_vm[0]
 }

@@ -1,5 +1,9 @@
 # Allow SSH access through Google Identity-Aware Proxy
 resource "google_compute_firewall" "allow_iap_ssh" {
+  lifecycle {
+    prevent_destroy = true
+  }
+
   name    = "allow-iap-ssh"
   network = google_compute_network.platform_vpc.name
 
@@ -19,6 +23,10 @@ resource "google_compute_firewall" "allow_iap_ssh" {
 
 # Allow management subnet to access application HTTPS
 resource "google_compute_firewall" "allow_mgmt_to_app" {
+  lifecycle {
+    prevent_destroy = true
+  }
+
   name    = "allow-mgmt-to-app"
   network = google_compute_network.platform_vpc.name
 
