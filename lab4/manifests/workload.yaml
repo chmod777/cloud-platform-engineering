@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fastapi-lab4
+  labels:
+    app: fastapi-lab4
+automountServiceAccountToken: false
+imagePullSecrets:
+  - name: gar-pull-lab4
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-lab4
+  labels:
+    app: fastapi-lab4
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: fastapi-lab4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: fastapi-lab4
+    spec:
+      serviceAccountName: fastapi-lab4
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: fastapi-lab4
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: api
+          image: IMAGE_BY_DIGEST
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: APP_ENV
+              value: openshift-lab4
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-lab4
+  labels:
+    app: fastapi-lab4
+spec:
+  selector:
+    app: fastapi-lab4
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: fastapi-lab4
+  labels:
+    app: fastapi-lab4
+spec:
+  to:
+    kind: Service
+    name: fastapi-lab4
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
