@@ -32,3 +32,8 @@ override.tf.json
 # Python local caches
 __pycache__/
 *.pyc
+
+# LAB 3 local environment and operation lock
+lab3/.venv/
+lab3/.pytest_cache/
+lab3/.session-lock/

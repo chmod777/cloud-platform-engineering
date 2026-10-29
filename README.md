@@ -1,8 +1,8 @@
 # Cloud Platform Engineering — Google Cloud
 
 A hands-on portfolio of Google Cloud infrastructure labs, built with Terraform.
-The project demonstrates private VM administration, network troubleshooting, and
-controlled infrastructure lifecycle management. Each lab records architecture
+The project demonstrates private VM administration, network troubleshooting,
+controlled infrastructure lifecycle management, and authenticated serverless API deployment. Each lab records architecture
 decisions, observed results, and implementation limits for technical interviews.
 
 ## Labs and evidence
@@ -11,6 +11,8 @@ decisions, observed results, and implementation limits for technical interviews.
 |---|---|---|
 | [Lab 1 — GCP foundations and a private VM](docs/lab-01-gcp-foundations.md) | VPC, regional subnets, Compute Engine, IAM, IAP, OS Login, Linux networking | VM deployment, SSH session, routing and DNS output, failed outbound HTTPS test, cleanup verification |
 | [Lab 2 — Controlled VM lifecycle](docs/lab-02-vm-lifecycle.md) | Optional VM, Terraform plan validation, permanent resource protection, shell scripts | Live creation, repeated start plan with no changes, IAP SSH, empty cleanup inventory, repeated stop plan with no changes; seven plan guard tests |
+
+| [Lab 3 — Containerized API on Cloud Run](docs/lab-03-cloud-run.md) | FastAPI, Docker, Artifact Registry, Cloud Run, IAM, isolated Terraform state | Local container checks, authenticated HTTP 200, anonymous HTTP 403, application logs, verified resource cleanup; nine automated tests |
 
 [Technical interview notes](docs/interview-notes.md) connect the implementation
 to product concepts, design tradeoffs, and questions to discuss.
@@ -33,13 +35,23 @@ scripts/
   lab                 # Shared lifecycle implementation
   check-plan.py       # Reject changes outside the allowed VM lifecycle
 tests/               # Plan guard unit tests
-docs/                # Lab report and interview notes
+lab3/
+  app/               # FastAPI application
+  app_tests/         # API and Terraform plan guard tests
+  Dockerfile         # Linux container, non-root runtime
+  infra/             # Independent Lab 3 Terraform root and provider lock
+  lifecycle          # Preview-first prepare, deploy, and clean commands
+  guard.py           # Restrict plan addresses and actions
+  README.md          # Step-by-step operating guide in French
+docs/                # Lab reports and interview notes
 ```
 
 The development project is `cloud-platform-engineering-hs`. The current design
-keeps permanent resources and the temporary VM in **one local Terraform state**.
+keeps Lab 1/2 permanent resources and the temporary VM in **one local Terraform state**.
 Separate files provide a clear code boundary; independent states are a future
 migration, requiring a verified backup and an explicit migration procedure.
+Lab 3 starts with its own local state in `lab3/infra`; it does not migrate or
+manage the existing foundation resources.
 
 The VM is disabled by default (`lab_enabled = false`). Permanent resources have
 `prevent_destroy`; that protection depends on keeping the corresponding resource
@@ -60,7 +72,7 @@ Initialize the locked provider dependencies with:
 terraform -chdir=terraform/environments/dev init -lockfile=readonly
 ```
 
-## Run the lab
+## Run Labs 1 and 2
 
 From the repository root:
 
@@ -130,9 +142,40 @@ plans. They complement the live lifecycle session documented in Lab 2.
 
 ## Known limitations and next steps
 
-- One local state: no remote backend or independent foundation/compute states yet.
+- Labs 1/2 share a local state; Lab 3 has a separate local state. No remote backend yet.
 - The HTTPS firewall rule allows `10.10.2.0/24`; the Belgian VM uses `10.10.3.0/24`.
   Application connectivity from Belgium has not been implemented or validated.
 - No automatic shutdown, billing enforcement, or project-wide resource cleanup.
-- No CI workflow or application workload deployed yet.
+- No CI workflow yet. Lab 3 has completed one application deployment and cleanup cycle.
 - This is a development lab with recorded evidence, not a production readiness claim.
+
+## Run Lab 3 — Docker & Cloud Run
+
+Read the [architecture and evidence report](docs/lab-03-cloud-run.md) and the
+[French step-by-step guide](lab3/README.md) before applying changes.
+
+```bash
+# Local API tests; no cloud resources are created.
+python3 -m venv lab3/.venv
+lab3/.venv/bin/pip install -r lab3/requirements-dev.txt
+(cd lab3 && .venv/bin/python -m pytest app_tests -v)
+
+# Preview the temporary registry and runtime identity.
+terraform -chdir=lab3/infra init -lockfile=readonly
+./lab3/lifecycle prepare
+
+# Preview cleanup of resources tracked by the Lab 3 state.
+./lab3/lifecycle clean
+```
+
+`prepare`, `deploy`, and `clean` generate and inspect a saved plan. Add `--apply`
+to apply it after confirmation. Publishing the image and supplying its digest
+are required before `deploy`; see the guide for the complete sequence.
+`clean --apply` deletes the Lab 3 service, image repository, and runtime identity.
+Never run a global destroy against the Lab 1/2 foundation.
+
+**Verified on 29 October 2026:** the API returned HTTP 200 with authentication
+and HTTP 403 without a token. The temporary cloud resources were then deleted;
+no live demo is intentionally kept running. Trial status and credit validity
+must be checked before every new session. Scaling limits and budget alerts do
+not guarantee a spending cap.
