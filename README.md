@@ -2,6 +2,11 @@
 
 Infrastructure de développement : projet `cloud-platform-engineering-hs`.
 
+## Parcours des labs
+
+- [LAB 1 — Réseau GCP, VM privée, IAP et diagnostics Linux](docs/lab-01-gcp-foundations.md) : architecture, résultats observés, problème de capacité et nettoyage.
+- **LAB 2 — Automatisation du cycle de vie** : scripts, protections et utilisation décrits ci-dessous.
+
 ## Organisation et protection
 
 `terraform/environments/dev/` conserve un seul état local pour cette première étape.
