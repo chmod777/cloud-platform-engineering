@@ -9,27 +9,27 @@ if [[ "$MODE" != start && "$MODE" != stop && "$MODE" != status ]]; then
   echo "Usage: scripts/lab {start|stop|status} [--plan]" >&2; exit 2
 fi
 if [[ $# -gt 2 || ( $# -eq 2 && ( "$2" != --plan || "$MODE" == status ) ) ]]; then
-  echo "Seule l'option --plan est acceptée pour start/stop." >&2; exit 2
+  echo "Only --plan is accepted for start/stop." >&2; exit 2
 fi
 if [[ "$MODE" == status ]]; then
   command -v gcloud >/dev/null
-  echo "Projet : $PROJECT — inventaire, pas un relevé de facturation"
+  echo "Project: $PROJECT — resource inventory; billing data is not included"
   gcloud compute instances list --project="$PROJECT" --format='table(name,zone.basename(),status)'
   gcloud compute disks list --project="$PROJECT" --format='table(name,zone.basename(),sizeGb,status,users)'
   gcloud compute addresses list --project="$PROJECT" --format='table(name,region.basename(),status,addressType)'
-  echo "Vérifier aussi la facturation et les autres services du projet."
+  echo "Also check Cloud Billing and other project services."
   exit
 fi
 for tool in terraform python3; do command -v "$tool" >/dev/null; done
 # Prevent inherited CLI arguments from changing planning/applying behavior.
 if env | LC_ALL=C grep -q '^TF_CLI_ARGS'; then
-  echo "Retirer les variables TF_CLI_ARGS avant de lancer le lab." >&2; exit 1
+  echo "Unset TF_CLI_ARGS variables before running the lab." >&2; exit 1
 fi
 if [[ -n "${TF_WORKSPACE:-}" || -n "${TF_DATA_DIR:-}" ]]; then
-  echo "Retirer TF_WORKSPACE et TF_DATA_DIR avant de lancer le lab." >&2; exit 1
+  echo "Unset TF_WORKSPACE and TF_DATA_DIR before running the lab." >&2; exit 1
 fi
-[[ "$(terraform -chdir="$TF" workspace show)" == default ]] || { echo "Workspace default requis." >&2; exit 1; }
-mkdir "$ROOT/.lab-lock" 2>/dev/null || { echo "Une opération est déjà en cours (.lab-lock)." >&2; exit 1; }
+[[ "$(terraform -chdir="$TF" workspace show)" == default ]] || { echo "The default workspace is required." >&2; exit 1; }
+mkdir "$ROOT/.lab-lock" 2>/dev/null || { echo "Another operation may be running; check .lab-lock." >&2; exit 1; }
 TMP=""
 cleanup() { [[ -z "$TMP" ]] || rm -rf "$TMP"; rmdir "$ROOT/.lab-lock"; }
 trap cleanup EXIT
@@ -44,11 +44,11 @@ terraform -chdir="$TF" plan -input=false -lock-timeout=30s \
   -var="lab_enabled=$ENABLED" -out="$TMP/plan.tfplan"
 terraform -chdir="$TF" show -json "$TMP/plan.tfplan" > "$TMP/plan.json"
 python3 "$ROOT/scripts/check-plan.py" "$MODE" "$TMP/plan.json"
-if [[ "${2:-}" == --plan ]]; then echo "Plan vérifié. Aucun changement appliqué."; exit; fi
+if [[ "${2:-}" == --plan ]]; then echo "Plan validated. No changes applied."; exit; fi
 if [[ "$MODE" == start ]]; then
-  echo "VM et disque facturables en Belgique. Vérifie le solde et l'échéance des crédits dans la console."
-  echo "La durée de session n'est pas limitée automatiquement. Utilise lab-stop en fin de session."
+  echo "The VM and disk in Belgium are billable. Check your credit balance and expiration in the console."
+  echo "There is no automatic session timeout. Run lab-stop when finished."
 fi
-read -r -p "Appliquer ce plan vérifié ? Tape yes : " ANSWER
-[[ "$ANSWER" == yes ]] || { echo "Annulé."; exit 0; }
+read -r -p "Apply this validated plan? Type yes: " ANSWER
+[[ "$ANSWER" == yes ]] || { echo "Cancelled."; exit 0; }
 terraform -chdir="$TF" apply -input=false -lock-timeout=30s "$TMP/plan.tfplan"
