@@ -115,7 +115,7 @@ are not fully pinned. The macOS Python 3.9 dependency snapshot records the local
 test environment and is not a cross-platform container lock file.
 No remote state backend or CI/CD workflow is implemented.
 
-## Interview discussion
+## Design rationale
 
 - **Why Cloud Run here?** It isolates container packaging, IAM, and deployment
   concepts before adding cluster administration in a later platform lab.

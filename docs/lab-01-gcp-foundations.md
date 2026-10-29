@@ -192,5 +192,5 @@ firewall permissions, and outbound connectivity.
 
 Lab 2 adds lifecycle scripts and foundation protections. Independent states,
 a remote backend, application connectivity from Belgium, and automatic shutdown
-remain future work. See [technical interview notes](interview-notes.md) for
+remain future work. See [architecture and operational notes](architecture-notes.md) for
 questions grounded in this implementation.

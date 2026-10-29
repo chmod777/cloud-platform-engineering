@@ -179,7 +179,7 @@ The existing seven unit tests cover:
 These tests complement the live session. They do not establish coverage of every
 possible provider field, IAM failure, interruption, or state corruption scenario.
 
-## Outcome and technical interview takeaways
+## Outcome and operational lessons
 
 - **Desired state:** start and stop use the same configuration with a controlled
   VM input, rather than a routine targeted destroy.
@@ -203,4 +203,4 @@ workflow, application connectivity test, or billing enforcement.
 
 No exact VM session cost or trial credit balance is published here. Resource
 inventory is not a billing report or an exhaustive audit of other Google Cloud
-services. See the [README](../README.md) and [interview notes](interview-notes.md).
+services. See the [README](../README.md) and [architecture notes](architecture-notes.md).

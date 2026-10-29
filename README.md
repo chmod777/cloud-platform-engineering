@@ -1,9 +1,9 @@
 # Cloud Platform Engineering — Google Cloud
 
-A hands-on portfolio of Google Cloud infrastructure labs, built with Terraform.
+A collection of hands-on Google Cloud infrastructure labs, built with Terraform.
 The project demonstrates private VM administration, network troubleshooting,
 controlled infrastructure lifecycle management, and authenticated serverless API deployment. Each lab records architecture
-decisions, observed results, and implementation limits for technical interviews.
+decisions, observed results, and implementation limits.
 
 ## Labs and evidence
 
@@ -11,10 +11,9 @@ decisions, observed results, and implementation limits for technical interviews.
 |---|---|---|
 | [Lab 1 — GCP foundations and a private VM](docs/lab-01-gcp-foundations.md) | VPC, regional subnets, Compute Engine, IAM, IAP, OS Login, Linux networking | VM deployment, SSH session, routing and DNS output, failed outbound HTTPS test, cleanup verification |
 | [Lab 2 — Controlled VM lifecycle](docs/lab-02-vm-lifecycle.md) | Optional VM, Terraform plan validation, permanent resource protection, shell scripts | Live creation, repeated start plan with no changes, IAP SSH, empty cleanup inventory, repeated stop plan with no changes; seven plan guard tests |
-
 | [Lab 3 — Containerized API on Cloud Run](docs/lab-03-cloud-run.md) | FastAPI, Docker, Artifact Registry, Cloud Run, IAM, isolated Terraform state | Local container checks, authenticated HTTP 200, anonymous HTTP 403, application logs, verified resource cleanup; nine automated tests |
 
-[Technical interview notes](docs/interview-notes.md) connect the implementation
+[Architecture and operational notes](docs/architecture-notes.md) connect the implementation
 to product concepts, design tradeoffs, and questions to discuss.
 
 ## Architecture and repository layout
@@ -43,7 +42,7 @@ lab3/
   lifecycle          # Preview-first prepare, deploy, and clean commands
   guard.py           # Restrict plan addresses and actions
   README.md          # Step-by-step operating guide in French
-docs/                # Lab reports and interview notes
+docs/                # Lab reports and architecture notes
 ```
 
 The development project is `cloud-platform-engineering-hs`. The current design
