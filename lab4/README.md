@@ -1,4 +1,4 @@
-# LAB 4 — Artifact Registry privé → OpenShift Developer Sandbox
+# LAB 4 - Artifact Registry privé → OpenShift Developer Sandbox
 
 [Architecture et résultats](../docs/lab-04-hybrid-openshift.md)
 

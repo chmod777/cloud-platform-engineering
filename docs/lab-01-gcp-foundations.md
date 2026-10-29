@@ -1,4 +1,4 @@
-# Lab 1 — Google Cloud networking and a private VM with Terraform
+# Lab 1 - Google Cloud networking and a private VM with Terraform
 
 Completed on 29 October 2026. The VM was deployed, accessed through SSH, inspected
 with Linux networking tools, and deleted together with its boot disk. The network
@@ -18,15 +18,15 @@ Observations are separated from architectural expectations and future work.
 
 ```mermaid
 flowchart TD
-    Mac[Mac — gcloud SSH] --> IAP[IAP tunnel + OS Login]
-    subgraph VPC[platform-vpc — global network]
-        subgraph Paris[europe-west9 — Paris]
-            App[app-subnet — 10.10.1.0/24]
-            Mgmt[mgmt-subnet — 10.10.2.0/24]
+    Mac[Mac - gcloud SSH] --> IAP[IAP tunnel + OS Login]
+    subgraph VPC[platform-vpc - global network]
+        subgraph Paris[europe-west9 - Paris]
+            App[app-subnet - 10.10.1.0/24]
+            Mgmt[mgmt-subnet - 10.10.2.0/24]
         end
-        subgraph Belgium[europe-west1 — Belgium]
-            BE[mgmt-subnet-be — 10.10.3.0/24]
-            VM[vm-mgmt-01 — Debian 12 — private IP]
+        subgraph Belgium[europe-west1 - Belgium]
+            BE[mgmt-subnet-be - 10.10.3.0/24]
+            VM[vm-mgmt-01 - Debian 12 - private IP]
             BE --- VM
         end
     end

@@ -1,4 +1,4 @@
-# Lab 3 — Containerized API on Cloud Run
+# Lab 3 - Containerized API on Cloud Run
 
 **Status:** one live build, publish, deploy, authenticated access, and cleanup
 cycle completed on 29 October 2026. No live service is kept running.

@@ -13,7 +13,7 @@ if [[ $# -gt 2 || ( $# -eq 2 && ( "$2" != --plan || "$MODE" == status ) ) ]]; th
 fi
 if [[ "$MODE" == status ]]; then
   command -v gcloud >/dev/null
-  echo "Project: $PROJECT — resource inventory; billing data is not included"
+  echo "Project: $PROJECT - resource inventory; billing data is not included"
   gcloud compute instances list --project="$PROJECT" --format='table(name,zone.basename(),status)'
   gcloud compute disks list --project="$PROJECT" --format='table(name,zone.basename(),sizeGb,status,users)'
   gcloud compute addresses list --project="$PROJECT" --format='table(name,region.basename(),status,addressType)'

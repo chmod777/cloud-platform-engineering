@@ -1,4 +1,4 @@
-# Lab 4 — Private Google Cloud registry to OpenShift Developer Sandbox
+# Lab 4 - Private Google Cloud registry to OpenShift Developer Sandbox
 
 **Status:** deployment and cleanup completed on 29 October 2026, as reported
 by the operator. No live demo or registry image is retained. This report records

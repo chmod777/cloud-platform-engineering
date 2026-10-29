@@ -1,4 +1,4 @@
-# Lab 2 — Controlled VM lifecycle and idempotence
+# Lab 2 - Controlled VM lifecycle and idempotence
 
 Status: one live start/access/cleanup cycle completed, with no-change repeat
 plans for both the running and absent VM states. Evidence below comes from the

@@ -1,4 +1,4 @@
-# LAB 3 — Résultats du 29 octobre 2026
+# LAB 3 - Résultats du 29 octobre 2026
 
 Cycle réel de création, publication, déploiement, test et suppression réalisé
 sur le projet `cloud-platform-engineering-hs`, région `europe-west9` (Paris).

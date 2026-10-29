@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 
-app = FastAPI(title="Cloud Platform Engineering — LAB 3")
+app = FastAPI(title="Cloud Platform Engineering - LAB 3")
 
 @app.get("/health")
 def health():

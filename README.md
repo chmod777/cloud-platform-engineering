@@ -1,4 +1,4 @@
-# Cloud Platform Engineering — Google Cloud
+# Cloud Platform Engineering - Google Cloud
 
 A collection of hands-on Google Cloud infrastructure labs, built with Terraform.
 The project demonstrates private VM administration, network troubleshooting,
@@ -10,10 +10,10 @@ architecture decisions, observed results, and implementation limits.
 
 | Lab | Scope | Evidence |
 |---|---|---|
-| [Lab 1 — GCP foundations and a private VM](docs/lab-01-gcp-foundations.md) | VPC, regional subnets, Compute Engine, IAM, IAP, OS Login, Linux networking | VM deployment, SSH session, routing and DNS output, failed outbound HTTPS test, cleanup verification |
-| [Lab 2 — Controlled VM lifecycle](docs/lab-02-vm-lifecycle.md) | Optional VM, Terraform plan validation, permanent resource protection, shell scripts | Live creation, repeated start plan with no changes, IAP SSH, empty cleanup inventory, repeated stop plan with no changes; seven plan guard tests |
-| [Lab 3 — Containerized API on Cloud Run](docs/lab-03-cloud-run.md) | FastAPI, Docker, Artifact Registry, Cloud Run, IAM, isolated Terraform state | Local container checks, authenticated HTTP 200, anonymous HTTP 403, application logs, verified resource cleanup; nine automated tests |
-| [Lab 4 — Private registry to OpenShift](docs/lab-04-hybrid-openshift.md) | Private Artifact Registry, Developer Sandbox, temporary OAuth pull credentials, SCC/RBAC, scaling and rollbacks | Operator-reported HTTPS checks, two pods on two nodes, rolling update/rollback, restricted-v2 process checks and cleanup |
+| [Lab 1 - GCP foundations and a private VM](docs/lab-01-gcp-foundations.md) | VPC, regional subnets, Compute Engine, IAM, IAP, OS Login, Linux networking | VM deployment, SSH session, routing and DNS output, failed outbound HTTPS test, cleanup verification |
+| [Lab 2 - Controlled VM lifecycle](docs/lab-02-vm-lifecycle.md) | Optional VM, Terraform plan validation, permanent resource protection, shell scripts | Live creation, repeated start plan with no changes, IAP SSH, empty cleanup inventory, repeated stop plan with no changes; seven plan guard tests |
+| [Lab 3 - Containerized API on Cloud Run](docs/lab-03-cloud-run.md) | FastAPI, Docker, Artifact Registry, Cloud Run, IAM, isolated Terraform state | Local container checks, authenticated HTTP 200, anonymous HTTP 403, application logs, verified resource cleanup; nine automated tests |
+| [Lab 4 - Private registry to OpenShift](docs/lab-04-hybrid-openshift.md) | Private Artifact Registry, Developer Sandbox, temporary OAuth pull credentials, SCC/RBAC, scaling and rollbacks | Operator-reported HTTPS checks, two pods on two nodes, rolling update/rollback, restricted-v2 process checks and cleanup |
 
 [Architecture and operational notes](docs/architecture-notes.md) connect the implementation
 to product concepts, design tradeoffs, and questions to discuss.
@@ -153,7 +153,7 @@ plans. They complement the live lifecycle session documented in Lab 2.
 - No CI workflow yet. Lab 3 has completed one application deployment and cleanup cycle.
 - This is a development lab with recorded evidence, not a production readiness claim.
 
-## Run Lab 3 — Docker & Cloud Run
+## Run Lab 3 - Docker & Cloud Run
 
 Read the [architecture and evidence report](docs/lab-03-cloud-run.md) and the
 [French step-by-step guide](lab3/README.md) before applying changes.
@@ -184,7 +184,7 @@ no live demo is intentionally kept running. Trial status and credit validity
 must be checked before every new session. Scaling limits and budget alerts do
 not guarantee a spending cap.
 
-## Run Lab 4 — Private Artifact Registry to OpenShift
+## Run Lab 4 - Private Artifact Registry to OpenShift
 
 Read the [architecture and recorded evidence](docs/lab-04-hybrid-openshift.md) and
 the [French operating guide](lab4/README.md). The previous image was deleted:

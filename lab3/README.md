@@ -1,4 +1,4 @@
-# LAB 3 — Docker, FastAPI et Cloud Run
+# LAB 3 - Docker, FastAPI et Cloud Run
 
 [Architecture et rapport technique](../docs/lab-03-cloud-run.md) · [Résultats vérifiés](RESULTATS.md)
 
