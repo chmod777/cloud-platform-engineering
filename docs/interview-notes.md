@@ -1,7 +1,8 @@
 # Technical interview notes
 
 Use these notes to explain the implementation and reason about tradeoffs.
-The [Lab 1 report](lab-01-gcp-foundations.md) contains the observed evidence;
+The [Lab 1 report](lab-01-gcp-foundations.md) and
+[Lab 2 report](lab-02-vm-lifecycle.md) contain the observed evidence;
 the [README](../README.md) describes the current lifecycle implementation.
 
 ## Project walkthrough
@@ -13,10 +14,12 @@ the [README](../README.md) describes the current lifecycle implementation.
 > Paris network foundation. I deleted the VM and boot disk after the session.
 > I then added scripts that validate the full Terraform plan and allow only the
 > intended VM creation or deletion, with permanent resource protection and tests.
+> I validated a live start/access/cleanup session and confirmed that repeat plans
+> proposed no changes for both the running and absent VM states.
 
 Support each point with the code or recorded output. The scripts have been tested
-with real plans and unit tests; a live lifecycle cycle through the new scripts
-has not yet been completed.
+with real plans, seven unit tests, and one live lifecycle session. Repeated start
+and stop checks used plan mode; they were not repeated applies.
 
 ## Product concepts and implementation evidence
 
@@ -73,14 +76,15 @@ separate check for script-driven operations.
 
 Define the environment and state boundaries, implement a remote backend and
 appropriate locking, review IAM permissions, add CI plan review, and implement
-reliable session expiry or resource cleanup. Validate the complete lifecycle and
-application network paths. These are proposed improvements, not delivered features.
+reliable session expiry or resource cleanup. Broaden lifecycle validation to
+interrupted and concurrent executions and validate application network paths.
+These are proposed improvements, not delivered features.
 
 ## Claims to keep precise
 
 - Say that private SSH access was verified; application HTTPS connectivity was not.
-- Say that real start and stop plans were checked; repeated live script execution
-  has not yet demonstrated end-to-end idempotence.
+- Say that a live start/access/cleanup session succeeded and repeated start/stop
+  plans returned no changes; repeat applies and failure recovery were not tested.
 - Say that cleanup inventory was empty for instances, disks, and reserved IPs;
   other services and billing were not exhaustively audited.
 - Say that this is a development lab demonstrating specific skills; avoid claims

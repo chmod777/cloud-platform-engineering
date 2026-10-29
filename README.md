@@ -10,7 +10,7 @@ decisions, observed results, and implementation limits for technical interviews.
 | Lab | Scope | Evidence |
 |---|---|---|
 | [Lab 1 — GCP foundations and a private VM](docs/lab-01-gcp-foundations.md) | VPC, regional subnets, Compute Engine, IAM, IAP, OS Login, Linux networking | VM deployment, SSH session, routing and DNS output, failed outbound HTTPS test, cleanup verification |
-| Lab 2 — Controlled VM lifecycle | Optional VM, Terraform plan validation, permanent resource protection, shell scripts | Start plan: one VM creation; stop plan with VM absent: no changes; seven plan guard tests |
+| [Lab 2 — Controlled VM lifecycle](docs/lab-02-vm-lifecycle.md) | Optional VM, Terraform plan validation, permanent resource protection, shell scripts | Live creation, repeated start plan with no changes, IAP SSH, empty cleanup inventory, repeated stop plan with no changes; seven plan guard tests |
 
 [Technical interview notes](docs/interview-notes.md) connect the implementation
 to product concepts, design tradeoffs, and questions to discuss.
@@ -81,9 +81,10 @@ The stop guard rejects retained boot disks and additional attached disks.
 
 Plans are written to a private temporary directory and removed on exit. The exact
 validated plan is applied only after typing `yes`. `--plan` never applies changes.
-Repeated commands should converge to no changes when the remote state already
-matches the requested configuration. A live create/delete/recreate cycle has not
-yet been tested through these scripts; the observed plans are listed above.
+A live session verified creation, SSH access, and cleanup. Repeat start and stop
+plans returned no changes in the running and absent states, respectively. These
+checks demonstrate convergence in that session; they were repeat plans rather
+than repeat applies. See the [Lab 2 evidence](docs/lab-02-vm-lifecycle.md).
 
 A local lock prevents concurrent script executions, alongside Terraform state
 locking. After a crash, confirm no operation is running before removing a stale
@@ -125,7 +126,7 @@ terraform -chdir=terraform/environments/dev fmt -check
 
 The seven guard tests cover no-op plans, permitted VM deletion, rejected network
 changes, rejected VM replacement, retained disks, attached disks, and incomplete
-plans. They do not replace a live lifecycle integration test.
+plans. They complement the live lifecycle session documented in Lab 2.
 
 ## Known limitations and next steps
 
