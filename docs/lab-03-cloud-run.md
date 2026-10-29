@@ -48,7 +48,7 @@ The application does not call other Google Cloud APIs.
 
 ## Operating sequence
 
-The [French guide](../lab3/README.md) contains prerequisites and complete commands.
+The [operating guide](../lab3/README.md) contains prerequisites and complete commands.
 Run all commands from the repository root.
 
 1. Check the billing account remains on the free trial, with sufficient valid credits.
@@ -93,7 +93,7 @@ The deployed image digest was
 `sha256:47635b9c5738f40b3f04d8ee891af414d35642dc7e1659aac9d4ce2a1a9842d7`.
 These results describe the recorded session, not continuous monitoring. A
 no-change repeat cleanup plan was performed; a second cleanup apply was not needed.
-Detailed session notes are available [in French](../lab3/RESULTATS.md).
+Detailed session notes are available [here](../lab3/RESULTS.md).
 
 ## Cost controls and limitations
 

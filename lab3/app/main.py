@@ -9,4 +9,4 @@ def health():
 
 @app.get("/")
 def root():
-    return {"message": "Bonjour depuis le LAB 3", "environment": os.getenv("APP_ENV", "local")}
+    return {"message": "Hello from LAB 3", "environment": os.getenv("APP_ENV", "local")}

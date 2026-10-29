@@ -20,7 +20,7 @@ variable "image" {
   default = ""
   validation {
     condition     = var.image == "" || can(regex("^europe-west9-docker\\.pkg\\.dev/cloud-platform-engineering-hs/lab3-api/api@sha256:[0-9a-f]{64}$", var.image))
-    error_message = "Utiliser le digest sha256 de l'image du dépôt lab3-api."
+    error_message = "Use the SHA-256 image digest from the lab3-api repository."
   }
 }
 resource "google_project_service" "apis" {
@@ -33,12 +33,12 @@ resource "google_artifact_registry_repository" "api" {
   location      = "europe-west9"
   repository_id = "lab3-api"
   format        = "DOCKER"
-  description   = "Images temporaires LAB 3, à supprimer après la session"
+  description   = "Temporary Lab 3 images; delete after the session"
   depends_on    = [google_project_service.apis]
 }
 resource "google_service_account" "runtime" {
   account_id   = "lab3-api-runtime"
-  display_name = "LAB 3 API sans rôle projet"
+  display_name = "LAB 3 API without project roles"
   depends_on   = [google_project_service.apis]
 }
 resource "google_cloud_run_v2_service" "api" {
@@ -72,7 +72,7 @@ resource "google_cloud_run_v2_service" "api" {
   lifecycle {
     precondition {
       condition     = var.image != ""
-      error_message = "Une image publiée et identifiée par digest est obligatoire."
+      error_message = "A published image identified by its digest is required."
     }
   }
   depends_on = [google_project_service.apis]

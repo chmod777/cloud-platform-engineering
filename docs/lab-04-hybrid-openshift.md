@@ -10,7 +10,7 @@ as part of this documentation change.
 
 Run the Lab 3 FastAPI image on a different platform while separating image
 publication, image-pull authorization, Kubernetes permissions, and Linux process
-identity. See the [French operating guide](../lab4/README.md) for the full sequence.
+identity. See the [operating guide](../lab4/README.md) for the full sequence.
 
 ```mermaid
 flowchart LR

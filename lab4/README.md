@@ -1,30 +1,31 @@
-# LAB 4 - Artifact Registry privé → OpenShift Developer Sandbox
+# LAB 4 - Private Artifact Registry to OpenShift Developer Sandbox
 
-[Architecture et résultats](../docs/lab-04-hybrid-openshift.md)
+[Architecture and results](../docs/lab-04-hybrid-openshift.md)
 
-Guide à exécuter depuis la racine du dépôt dans un terminal Bash. Ces commandes
-créent des ressources lors d'une future session autorisée ; la rédaction du lab
-ne les exécute pas. Les ressources de la session initiale ont été supprimées.
+Run this guide from the repository root in a Bash terminal. These commands create
+resources during a future authorized session. No deployment was performed while
+writing this guide. Resources from the original session have been deleted.
 
-## 1. Prérequis et périmètre
+## 1. Prerequisites and scope
 
-- Docker avec Buildx, Python 3, gcloud, Terraform >= 1.5 et CLI `oc` compatible
-  avec le Sandbox ; accès réseau au registre et à la route HTTPS.
-- Session gcloud avec le compte et le projet attendus ; authentification ADC
-  disponible pour Terraform. Connexion `oc login` depuis la console du Sandbox,
-  sans recopier sa commande contenant un token dans Git ou un compte rendu.
-- Projet `cloud-platform-engineering-hs`, région `europe-west9`, namespace
-  `hassensiad06-dev` existant, quota pour deux pods et un pod de surge.
-- Droits GCP permettant les ressources du `prepare` LAB 3 et la publication
-  (`roles/artifactregistry.writer` sur le dépôt). Le jeton de pull doit permettre
-  la lecture (`roles/artifactregistry.reader` suffit). Le parcours ci-dessous
-  utilise l'identité gcloud courante : ses droits accompagnent le jeton.
-  Préférer une identité de lecture dédiée avec impersonation si disponible ;
-  cela exige les droits de génération de jeton sur cette identité.
-- Droits OpenShift de gérer Deployment, Service, Route, ServiceAccount et Secret
-  dans ce namespace. Aucun droit administrateur cluster ni SCC `anyuid` requis.
-- Vérifier dans la console GCP les crédits, leur expiration et le statut de
-  facturation avant toute création. Les quotas ne plafonnent pas les coûts.
+- Docker with Buildx, Python 3, gcloud, Terraform >= 1.5, and an `oc` CLI compatible
+  with the Sandbox; network access to the registry and HTTPS route.
+- A gcloud session using the intended account and project, with ADC available
+  to Terraform. Use `oc login` from the Sandbox console without copying its
+  token-bearing command into Git or a report.
+- Project `cloud-platform-engineering-hs`, region `europe-west9`, existing namespace
+  `hassensiad06-dev`, and quota for two pods plus one surge pod.
+- GCP permissions for the resources managed by Lab 3 `prepare` and for publishing
+  (`roles/artifactregistry.writer` on the repository). The pull token needs read
+  access (`roles/artifactregistry.reader` is sufficient). The steps below use
+  the current gcloud identity: the token carries that identity's permissions.
+  Prefer a dedicated reader identity through impersonation when available;
+  this requires permission to generate tokens for that identity.
+- OpenShift permissions to manage Deployments, Services, Routes, ServiceAccounts
+  and Secrets in this namespace. No cluster administrator access or `anyuid` SCC
+  is required.
+- Check credits, their expiration and billing status in the GCP console before
+  creating resources. Quotas do not cap spending.
 
 ```bash
 gcloud auth list --filter=status:ACTIVE
@@ -35,15 +36,14 @@ oc get resourcequota,limitrange -n hassensiad06-dev
 oc get deployment,service,route,serviceaccount,secret -n hassensiad06-dev --ignore-not-found \
   | grep -E 'fastapi-lab4|gar-pull-lab4' || true
 ```
+If these names already exist, check ownership before proceeding. Do not overwrite
+an existing workload or delete the shared namespace. The commands below target
+the namespace explicitly.
 
-Si les noms existent déjà, vérifier leur propriétaire avant de poursuivre : ne
-pas écraser un workload existant. Ne jamais supprimer le namespace partagé.
-Les commandes suivantes ciblent explicitement le namespace.
+## 2. Rebuild and publish an available image
 
-## 2. Reconstruire et publier une image disponible
-
-L'ancien digest est une preuve historique, pas une image réutilisable. Réutiliser
-les sources LAB 3 en lecture seule ; le message `/` reste celui du LAB 3.
+The old digest is historical evidence and cannot be reused. Reuse the Lab 3
+sources without editing them; the `/` message still identifies Lab 3.
 
 ```bash
 python3 -m venv lab3/.venv
@@ -58,7 +58,7 @@ docker stop lab4-api-test
 
 terraform -chdir=lab3/infra init -lockfile=readonly
 ./lab3/lifecycle prepare
-# Examiner le plan avant l'application avec confirmation intégrée.
+# Review the plan before applying with the built-in confirmation.
 ./lab3/lifecycle prepare --apply
 
 gcloud auth configure-docker europe-west9-docker.pkg.dev
@@ -67,24 +67,23 @@ docker tag lab4-api:local "$IMAGE"
 docker push "$IMAGE"
 DIGEST=$(gcloud artifacts docker images describe "$IMAGE" \
   --project=cloud-platform-engineering-hs --format='value(image_summary.digest)')
-[[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo 'Digest invalide'; exit 1; }
+[[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo 'Invalid digest'; exit 1; }
 export LAB4_IMAGE="${IMAGE%:*}@$DIGEST"
 ```
+The existing `prepare` also creates the Lab 3 runtime identity and enables its
+APIs; it does not deploy Cloud Run. Do not run `lifecycle deploy` for this lab.
+Keep the local state until cleanup completes. Bit-for-bit reproducibility is
+not guaranteed: the base image and transitive dependencies are not fully pinned.
 
-Le `prepare` existant crée aussi l'identité runtime LAB 3 et active ses API ; il
-ne déploie pas Cloud Run. Ne pas exécuter `lifecycle deploy` pour ce lab. Conserver
-l'état local jusqu'au nettoyage. Le build n'est pas identique bit à bit garanti :
-image de base et dépendances transitives ne sont pas entièrement verrouillées.
+## 3. Temporary pull secret without a service account key
 
-## 3. Pull secret temporaire, sans clé de compte de service
+The OAuth token normally expires after 60 minutes. The Kubernetes secret contains
+this token: base64 encodes it but does not encrypt it. Never commit a Secret
+export, display its value or enable `set -x`. The token is kept out of process
+arguments; a private Docker configuration outside the repository is removed
+even if the operation fails.
 
-Le jeton OAuth expire normalement après 60 minutes. Le secret Kubernetes contient
-ce jeton, encodé et non chiffré par base64 : il reste sensible. Il ne faut jamais
-versionner un export de Secret, afficher sa valeur ni activer `set -x`.
-Le jeton n'est pas placé dans les arguments de processus ; un fichier Docker
-privé hors dépôt est supprimé même si l'opération échoue.
-
-Exécuter ce bloc dans un sous-shell Bash avec `pipefail` :
+Run this block in a Bash subshell with `pipefail`:
 
 ```bash
 (
@@ -98,7 +97,7 @@ import sys, json, base64
 from pathlib import Path
 token = sys.stdin.read().strip()
 if not token:
-    raise SystemExit("Jeton absent")
+    raise SystemExit("Missing token")
 auth = base64.b64encode(("oauth2accesstoken:" + token).encode()).decode()
 Path(sys.argv[1]).write_text(json.dumps({"auths": {
     "europe-west9-docker.pkg.dev": {"auth": auth}}}))
@@ -109,23 +108,22 @@ Path(sys.argv[1]).write_text(json.dumps({"auths": {
     --dry-run=client -o yaml | oc apply -n hassensiad06-dev -f -
 )
 ```
+Repeat this block before expiration whenever another pull is needed (scaling,
+rollout, rollback or rescheduling). Running pods may continue, but that does not
+guarantee future starts. For `ImagePullBackOff`, check events, the image digest,
+GCP permissions and token validity. Avoiding a persistent key does not eliminate
+the temporary credential stored in the cluster.
 
-Répéter ce bloc avant expiration si un nouveau pull est nécessaire (scaling,
-rollout, rollback ou replanification). Les pods déjà démarrés peuvent continuer,
-mais cela ne garantit pas les futurs démarrages. En cas d'`ImagePullBackOff`,
-vérifier événements, digest, droits GCP et validité du jeton. L'absence de clé
-persistante n'élimine pas la présence temporaire d'un secret dans le cluster.
+## 4. Deploy and verify HTTPS
 
-## 4. Déployer et vérifier HTTPS
-
-Le fichier contient un marqueur volontairement invalide `IMAGE_BY_DIGEST`.
-Il faut le remplacer par le digest fraîchement publié avant application.
-Aucun Secret n'est inclus dans les manifests.
+The manifest contains an intentionally invalid `IMAGE_BY_DIGEST` placeholder.
+Replace it with the newly published digest before applying. No Secret is included
+in the manifests.
 
 ```bash
-: "${LAB4_IMAGE:?Reconstruire et publier l image avant de continuer}"
+: "${LAB4_IMAGE:?Rebuild and publish the image before continuing}"
 [[ "$LAB4_IMAGE" =~ ^europe-west9-docker\.pkg\.dev/cloud-platform-engineering-hs/lab3-api/api@sha256:[0-9a-f]{64}$ ]] || exit 1
-# Prévisualiser les objets, puis appliquer le même rendu.
+# Preview the objects, then apply the same rendered manifest.
 sed "s|IMAGE_BY_DIGEST|$LAB4_IMAGE|g" lab4/manifests/workload.yaml \
   | oc apply -n hassensiad06-dev --dry-run=server -f -
 sed "s|IMAGE_BY_DIGEST|$LAB4_IMAGE|g" lab4/manifests/workload.yaml \
@@ -135,13 +133,12 @@ HOST=$(oc get route fastapi-lab4 -n hassensiad06-dev -o jsonpath='{.spec.host}')
 curl --fail --show-error "https://$HOST/health"
 curl --fail --show-error "https://$HOST/"
 ```
+Expect `{"status":"ok"}` and `environment=openshift-lab4`. Do not use `-k`:
+the test must verify the certificate. The route is public and the API has no
+application authentication. TLS terminates at the edge router, followed by HTTP
+to the Service on port 8080; this does not provide end-to-end TLS.
 
-Attendre `{"status":"ok"}` et `environment=openshift-lab4`. Ne pas utiliser `-k` :
-le test doit vérifier le certificat. La route est publique et l'API ne possède
-pas d'authentification applicative. TLS est terminé au routeur (edge), puis HTTP
-vers le Service sur 8080 ; ce n'est pas du TLS de bout en bout.
-
-## 5. Scaling, mise à jour et rollback
+## 5. Scaling, rolling update and rollback
 
 ```bash
 oc scale deployment/fastapi-lab4 -n hassensiad06-dev --replicas=2
@@ -152,7 +149,7 @@ oc scale deployment/fastapi-lab4 -n hassensiad06-dev --replicas=1
 oc rollout status deployment/fastapi-lab4 -n hassensiad06-dev --timeout=180s
 
 oc rollout history deployment/fastapi-lab4 -n hassensiad06-dev
-# Noter la révision de référence avant la modification.
+# Record the baseline revision before making the change.
 oc set env deployment/fastapi-lab4 -n hassensiad06-dev APP_ENV=openshift-lab4-v2
 oc rollout status deployment/fastapi-lab4 -n hassensiad06-dev --timeout=180s
 curl --fail "https://$HOST/"
@@ -160,17 +157,16 @@ oc rollout undo deployment/fastapi-lab4 -n hassensiad06-dev
 oc rollout status deployment/fastapi-lab4 -n hassensiad06-dev --timeout=180s
 curl --fail "https://$HOST/"
 ```
+Verify two Ready pods and their node assignments, then a return to one pod.
+Anti-affinity is preferred: placement on two distinct nodes depends on Sandbox
+capacity and is not guaranteed. The update should return `openshift-lab4-v2`;
+the rollback should return `openshift-lab4`. `undo` restores the previous pod
+template revision, not secrets or the Service. Without an intervening template
+change, this is the recorded baseline; otherwise inspect history and explicitly
+select `--to-revision`. Probes and `maxUnavailable: 0` control the rollout but
+do not prove that no requests were lost. No load test or HPA was implemented.
 
-Vérifier deux pods Ready et leurs nœuds, puis le retour à un pod. L'anti-affinité
-est préférée : deux nœuds distincts dépendent de la capacité du Sandbox et ne
-sont pas garantis. La v2 doit retourner `openshift-lab4-v2`, le rollback
-`openshift-lab4`. `undo` restaure la révision précédente du template, pas les
-secrets ni le Service. Sans mutation intermédiaire, il s'agit de la référence
-notée ; sinon choisir explicitement `--to-revision` après inspection.
-Les probes et `maxUnavailable: 0` encadrent le rollout, sans prouver une absence
-totale de requêtes perdues. Aucun test de charge ou HPA n'a été réalisé.
-
-## 6. Vérifier RBAC, SCC et identité Linux
+## 6. Verify RBAC, SCC and Linux identity
 
 ```bash
 oc auth can-i create deployments.apps -n hassensiad06-dev \
@@ -185,24 +181,23 @@ oc exec -n hassensiad06-dev "$POD" -- id
 oc exec -n hassensiad06-dev "$POD" -- sh -c \
   'grep -E "^(Uid|NoNewPrivs|CapEff|CapBnd):" /proc/1/status'
 ```
+Expect `no` for both permissions, `restricted-v2` for the reference session's
+SCC, a non-root UID from the namespace range, `NoNewPrivs: 1`, and zero
+`CapEff`/`CapBnd` masks. An impersonation error is not evidence of an RBAC denial:
+ask an authorized administrator to verify it rather than granting the workload
+additional permissions. The manifest creates no RoleBinding and disables the
+ServiceAccount API token mount.
 
-Attendre `no` pour les deux permissions, `restricted-v2` pour la SCC de la
-session de référence, un UID non-root du namespace, `NoNewPrivs: 1` et des masques
-`CapEff`/`CapBnd` nuls. Une erreur d'impersonation n'est pas une preuve de refus
-RBAC : demander alors une vérification à un administrateur autorisé, sans
-accorder des droits supplémentaires au workload. Le manifeste ne crée aucun
-RoleBinding et désactive le montage du token API du ServiceAccount.
+Do not set `runAsUser: 1004890000`: that UID was observed in this namespace.
+OpenShift must assign a UID allowed by its SCC. The Lab 3 Dockerfile declares
+10001, which admission overrides; application code and dependencies are readable
+by the arbitrary UID, and the API does not need to write to `/app`. SCC selection
+depends on the Sandbox version and policies. Inspect the actual annotation;
+do not request `anyuid` to bypass a failure.
 
-Ne pas fixer `runAsUser: 1004890000` : cet UID était celui observé dans ce
-namespace. OpenShift doit attribuer un UID autorisé par sa SCC. Le Dockerfile
-LAB 3 déclare 10001, remplacé à l'admission ; son code et ses dépendances sont
-lisibles par l'UID arbitraire et l'API n'a pas besoin d'écrire dans `/app`.
-La sélection des SCC dépend de la version et des politiques du Sandbox ;
-vérifier l'annotation réelle, ne pas demander `anyuid` pour contourner un échec.
+## 7. Clean up, including after a partial session
 
-## 7. Nettoyer, même après une session partielle
-
-Inspecter les objets nommés, puis supprimer seulement les objets de ce lab :
+Inspect the named objects, then delete only this lab's resources:
 
 ```bash
 oc delete route,service,deployment,serviceaccount fastapi-lab4 \
@@ -214,7 +209,7 @@ oc get secret gar-pull-lab4 -n hassensiad06-dev --ignore-not-found
 oc get pods,replicasets -n hassensiad06-dev -l app=fastapi-lab4
 
 ./lab3/lifecycle clean
-# Vérifier que le plan ne cible que les ressources temporaires LAB 3.
+# Verify that the plan targets only temporary Lab 3 resources.
 ./lab3/lifecycle clean --apply
 terraform -chdir=lab3/infra state list
 gcloud artifacts repositories list --location=europe-west9 \
@@ -222,13 +217,12 @@ gcloud artifacts repositories list --location=europe-west9 \
 gcloud run services list --region=europe-west9 \
   --project=cloud-platform-engineering-hs
 ```
-
-Attendre la suppression des pods et ReplicaSets, des objets nommés, un état LAB 3
-vide et les inventaires régionaux attendus. Si d'autres ressources existent,
-ne pas les supprimer pour obtenir un inventaire vide. Une erreur API n'est pas
-un résultat vide. Le nettoyage LAB 3 détruit tout ce que son état gère, y compris
-un éventuel Cloud Run LAB 3 : vérifier qu'aucune autre session ne l'utilise.
-Ne pas supprimer les applications Telco, le projet Sandbox, ni exécuter destroy
-sur `terraform/environments/dev`. Les API GCP restent activées selon la
-configuration LAB 3. Conserver l'état en cas d'échec et résoudre le nettoyage.
-Ces vérifications ne garantissent pas l'absence de coût ailleurs dans le projet.
+Wait for pods, ReplicaSets and named objects to disappear, an empty Lab 3 state,
+and the expected regional inventories. If other resources exist, do not delete
+them to obtain an empty inventory. An API error is not an empty result. Lab 3
+cleanup destroys everything managed by its state, including any Lab 3 Cloud Run
+service: verify that no other session depends on it. Do not delete the Telco
+applications or Sandbox project, or run destroy against
+`terraform/environments/dev`. GCP APIs remain enabled according to the Lab 3
+configuration. Keep the state if cleanup fails and resolve the failure. These
+checks do not guarantee the absence of costs elsewhere in the project.

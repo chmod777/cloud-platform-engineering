@@ -43,10 +43,10 @@ lab3/
   infra/             # Independent Lab 3 Terraform root and provider lock
   lifecycle          # Preview-first prepare, deploy, and clean commands
   guard.py           # Restrict plan addresses and actions
-  README.md          # Step-by-step operating guide in French
+  README.md          # Step-by-step operating guide
 lab4/
   manifests/         # Secret-free OpenShift workload template
-  README.md          # French build, deploy, verify and cleanup guide
+  README.md          # Build, deploy, verify and cleanup guide
 docs/                # Lab reports and architecture notes
 ```
 
@@ -156,7 +156,7 @@ plans. They complement the live lifecycle session documented in Lab 2.
 ## Run Lab 3 - Docker & Cloud Run
 
 Read the [architecture and evidence report](docs/lab-03-cloud-run.md) and the
-[French step-by-step guide](lab3/README.md) before applying changes.
+[step-by-step guide](lab3/README.md) before applying changes.
 
 ```bash
 # Local API tests; no cloud resources are created.
@@ -187,7 +187,7 @@ not guarantee a spending cap.
 ## Run Lab 4 - Private Artifact Registry to OpenShift
 
 Read the [architecture and recorded evidence](docs/lab-04-hybrid-openshift.md) and
-the [French operating guide](lab4/README.md). The previous image was deleted:
+the [operating guide](lab4/README.md). The previous image was deleted:
 rebuild the Lab 3 application and publish a new digest before rendering the
 [OpenShift manifests](lab4/manifests/workload.yaml). The guide covers temporary
 OAuth image-pull credentials, HTTPS checks, scaling, rollout/rollback, RBAC/SCC

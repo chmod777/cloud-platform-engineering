@@ -7,29 +7,29 @@ MODE="${1:-}"
 [[ "$MODE" == prepare || "$MODE" == deploy || "$MODE" == clean ]] || { echo 'Usage: ./lab3/lifecycle prepare|deploy|clean [--apply]'; exit 2; }
 [[ $# -le 2 && ( "${2:-}" == '' || "${2:-}" == --apply ) ]] || exit 2
 if env | grep -Eq '^TF_(CLI_ARGS[^=]*|WORKSPACE|DATA_DIR|VAR_[^=]*)='; then
-  echo 'Retirer les variables TF_* qui pourraient modifier le plan.' >&2; exit 1
+  echo 'Remove TF_* variables that could alter the plan.' >&2; exit 1
 fi
 [[ "$(terraform -chdir="$TF" workspace show)" == default ]] || exit 1
-mkdir "$ROOT/.session-lock" || { echo 'Opération concurrente ou verrou à vérifier.'; exit 1; }
+mkdir "$ROOT/.session-lock" || { echo 'Concurrent operation or lock requires investigation.'; exit 1; }
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"; rmdir "$ROOT/.session-lock"' EXIT
 ARGS=(-var=deploy=false)
 if [[ "$MODE" == clean ]]; then
   ARGS=(-destroy)
 elif [[ "$MODE" == deploy ]]; then
-  : "${LAB3_IMAGE:?Définir LAB3_IMAGE avec le digest de l image}"
+  : "${LAB3_IMAGE:?Set LAB3_IMAGE to the image digest}"
   ARGS=(-var=deploy=true "-var=image=$LAB3_IMAGE")
 fi
 if [[ "$MODE" != clean && "${2:-}" == --apply ]]; then
-  echo 'Compte encore en essai, crédits suffisants, expiration vérifiée dans la console ?'
-  read -r -p 'Taper essai-verifie : ' ANSWER
-  [[ "$ANSWER" == essai-verifie ]] || exit 1
+  echo 'Account still on trial, sufficient credits, and expiration checked in the console?'
+  read -r -p 'Type trial-verified: ' ANSWER
+  [[ "$ANSWER" == trial-verified ]] || exit 1
 fi
 terraform -chdir="$TF" validate
 terraform -chdir="$TF" plan -input=false -lock-timeout=30s "${ARGS[@]}" -out="$TMP/plan"
 terraform -chdir="$TF" show -json "$TMP/plan" > "$TMP/plan.json"
 python3 "$ROOT/guard.py" "$MODE" "$TMP/plan.json"
-[[ "${2:-}" == --apply ]] || { echo 'Plan uniquement. Ajouter --apply pour appliquer.'; exit; }
-read -r -p 'Appliquer ce plan précis ? Taper oui : ' ANSWER
-[[ "$ANSWER" == oui ]] || exit 1
+[[ "${2:-}" == --apply ]] || { echo 'Plan only. Add --apply to apply.'; exit; }
+read -r -p 'Apply this exact plan? Type yes: ' ANSWER
+[[ "$ANSWER" == yes ]] || exit 1
 terraform -chdir="$TF" apply -input=false -lock-timeout=30s "$TMP/plan"

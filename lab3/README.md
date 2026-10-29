@@ -1,16 +1,17 @@
-# LAB 3 - Docker, FastAPI et Cloud Run
+# LAB 3 - Docker, FastAPI and Cloud Run
 
-[Architecture et rapport technique](../docs/lab-03-cloud-run.md) · [Résultats vérifiés](RESULTATS.md)
+[Architecture and technical report](../docs/lab-03-cloud-run.md) · [Verified results](RESULTS.md)
 
-Statut : cycle réel de déploiement et nettoyage terminé le 29 octobre 2026.
+Status: a live deployment and cleanup cycle completed on 29 October 2026.
 
-## 1. Comprendre et tester l'API
+## 1. Understand and test the API
 
-Une API expose des chemins HTTP. `GET /health` confirme que le processus répond ;
-`GET /` retourne un message et la variable d'environnement APP_ENV.
-Une variable configure la même image sans reconstruire son code ; ne pas y placer de secret.
+An API exposes HTTP paths. `GET /health` checks that the process responds;
+`GET /` returns a message and the APP_ENV environment variable. Environment
+variables configure the same image without rebuilding its code; do not put
+secrets in this variable.
 
-Depuis la racine du dépôt :
+From the repository root:
 
 ```bash
 python3 -m venv lab3/.venv
@@ -18,20 +19,19 @@ lab3/.venv/bin/pip install -r lab3/requirements-dev.txt
 (cd lab3 && .venv/bin/python -m pytest app_tests -v)
 (cd lab3 && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080)
 ```
+In a second terminal, run `curl --fail http://127.0.0.1:8080/health`.
+Stop the server with Ctrl-C.
 
-Dans un second terminal : `curl --fail http://127.0.0.1:8080/health`.
-Arrêter le serveur avec Ctrl-C.
+## 2. Build the container locally
 
-## 2. Construire le conteneur localement
-
-Docker, Buildx et Colima ont été installés sur ce Mac pendant la session.
-Pour les prochaines sessions : `colima start --cpu 2 --memory 2`.
-À la fin : `colima stop` (cela arrête seulement le moteur local, pas GCP).
-L'émulation amd64 fonctionne via QEMU ; Rosetta n'a pas été installée. L'image contient Python et les
-bibliothèques, le conteneur est un processus lancé à partir de cette image.
-L'utilisateur 10001 évite d'exécuter l'application comme root. Le contexte Docker
-exclut notamment les identifiants, l'état Terraform et l'environnement local.
-Cloud Run attend Linux amd64 et une écoute sur 0.0.0.0:$PORT.
+Docker, Buildx and Colima were installed on this Mac during the session.
+For subsequent sessions, run `colima start --cpu 2 --memory 2`.
+At the end, run `colima stop` (this stops only the local engine, not GCP).
+Linux amd64 emulation uses QEMU; Rosetta was not installed. An image contains
+Python and its libraries; a container is a process launched from that image.
+User 10001 avoids running the application as root. The Docker build context
+excludes credentials, Terraform state and the local development environment.
+Cloud Run expects Linux amd64 and a listener on `0.0.0.0:$PORT`.
 
 ```bash
 docker buildx build --platform linux/amd64 --load -t lab3-api:local lab3
@@ -40,43 +40,43 @@ curl --fail http://127.0.0.1:8080/health
 curl --fail http://127.0.0.1:8080/
 docker stop lab3-api-test
 ```
+## 3. Billing prerequisite
 
-## 3. Facturation : condition préalable
+Check the **Free Trial** status, remaining balance and expiration date in the
+console. Do not upgrade to a paid account for this lab. An API response with
+`billingEnabled=true` does not establish trial status. A budget is an alert,
+not a spending limit. Maximum instances does not provide a financial cap.
 
-Vérifier dans la console le statut **Essai gratuit**, le solde et sa date
- d'expiration. Ne jamais activer le compte payant dans ce lab. Une API qui retourne
-`billingEnabled=true` ne prouve pas le statut d'essai. Un budget est une alerte,
-pas une limite de dépense. Le maximum d'instances ne constitue pas un plafond financier.
+The service uses 1 CPU, 256 MiB, request-based billing, zero minimum instances
+and a service-level maximum of one instance. Stored images can incur charges
+even without traffic: delete the repository at the end. Logs may persist after
+deletion and incur costs depending on volume and retention. No Cloud Build,
+NAT, VPC connector, load balancer or VM was added.
 
-Le service utilise 1 CPU, 256 MiB, facturation à la requête, minimum zéro,
-maximum une instance au niveau service. L'image stockée reste potentiellement
-facturable même sans trafic : supprimer le dépôt à la fin. Les logs peuvent
-persister après suppression et engendrer des coûts selon volume/rétention.
-Aucun Cloud Build, NAT, connecteur VPC, équilibreur ou VM ajouté.
+## 4. Prepare Artifact Registry with Terraform
 
-## 4. Préparer Artifact Registry avec Terraform
-
-Terraform décrit l'état souhaité. Son état local relie les ressources déclarées
-aux objets GCP. `lab3/infra` utilise un état indépendant de `terraform/environments/dev`.
-Ne jamais lancer destroy dans l'environnement des LAB 1 et 2.
-Le script utilise un plan sauvegardé, contrôle son périmètre, puis applique ce plan précis.
-Sans `--apply`, il ne crée rien. Les changements et remplacements sont refusés.
-Ne pas modifier les fichiers ni changer de compte pendant une opération.
+Terraform describes the desired state. Its local state maps declared resources
+to GCP objects. `lab3/infra` uses state independent of
+`terraform/environments/dev`. Never run destroy against the Lab 1/2 environment.
+The script saves a plan, checks its scope, then applies that exact plan.
+Without `--apply`, it creates nothing. Updates and replacements are rejected.
+Do not edit files or change accounts during an operation. Before creating
+resources, the script requires `trial-verified` after the billing check;
+applying a reviewed plan requires typing `yes`.
 
 ```bash
 terraform -chdir=lab3/infra init -lockfile=readonly
 ./lab3/lifecycle prepare
 ./lab3/lifecycle prepare --apply
 ```
+This enables the required APIs and creates the `lab3-api` repository in Paris
+and a runtime identity without project roles. No service account key is created.
+Enabled APIs remain enabled after cleanup to preserve other uses.
 
-Cela active les API nécessaires et crée un dépôt `lab3-api` à Paris et une identité
- d'exécution sans rôle projet. Aucune clé de compte de service n'est créée.
-Les API activées restent activées après nettoyage pour préserver les autres usages.
+## 5. Publish the image and deploy
 
-## 5. Publier l'image et déployer
-
-Artifact Registry est le registre privé des images. Le digest sha256 identifie
-exactement le contenu déployé, contrairement à une étiquette modifiable.
+Artifact Registry stores private images. A SHA-256 digest identifies the exact
+content being deployed, unlike a mutable tag.
 
 ```bash
 gcloud auth configure-docker europe-west9-docker.pkg.dev
@@ -88,11 +88,10 @@ export LAB3_IMAGE="europe-west9-docker.pkg.dev/cloud-platform-engineering-hs/lab
 ./lab3/lifecycle deploy
 ./lab3/lifecycle deploy --apply
 ```
-
-L'opérateur a besoin des droits de déploiement et `iam.serviceAccounts.actAs` ;
-un refus IAM doit être diagnostiqué sans attribuer aveuglément Owner/Editor.
-Aucune autorisation `allUsers` : le service est accessible par réseau mais protégé
-par IAM. L'identité d'exécution et l'identité de l'utilisateur qui appelle sont distinctes.
+The operator needs deployment permissions and `iam.serviceAccounts.actAs`.
+Diagnose IAM denials without blindly granting Owner or Editor. No `allUsers`
+access is granted: the service is network-accessible but protected by IAM.
+The runtime identity and the caller's identity are separate.
 
 ```bash
 URL=$(terraform -chdir=lab3/infra output -raw url)
@@ -100,12 +99,11 @@ curl --fail -H "Authorization: Bearer $(gcloud auth print-identity-token)" "$URL
 curl -s -o /dev/null -w '%{http_code}\n' "$URL/health"
 gcloud run services logs read lab3-api --project=cloud-platform-engineering-hs --region=europe-west9 --limit=10
 ```
+Expect HTTP 200 with an authorized identity (`run.routes.invoke` permission),
+and a denial without a token. No load test was performed: scale-to-zero is
+configured behavior, not an observed scaling result.
 
-Attendre 200 avec une identité autorisée (permission run.routes.invoke),
-et un refus sans jeton. Pas de test de charge : le retour à zéro est un comportement
-configuré, pas une preuve de montée en charge observée.
-
-## 6. Nettoyer dès la fin, y compris après un échec partiel
+## 6. Clean up immediately, including after a partial failure
 
 ```bash
 ./lab3/lifecycle clean
@@ -115,14 +113,13 @@ gcloud artifacts repositories list --project=cloud-platform-engineering-hs --loc
 terraform -chdir=lab3/infra state list
 ./scripts/lab-status
 ```
+Cleanup deletes only resources managed by the Lab 3 state, including the
+repository and its images. It is not a comprehensive project inventory.
+Do not erase the state before cleanup succeeds. On failure, retain the state,
+rerun the cleanup plan and check resources in the console. Deleting resources
+does not cancel costs already incurred.
 
-Le nettoyage supprime uniquement les ressources gérées par l'état LAB 3, dont le
-dépôt et ses images. Il ne constitue pas un inventaire exhaustif du projet.
-Ne pas effacer l'état avant un nettoyage réussi. En cas d'échec, conserver l'état,
-relancer le plan de nettoyage et vérifier les ressources dans la console.
-Les dépenses déjà engagées ne sont pas annulées par la suppression.
-
-## Sources
+## References
 
 - https://cloud.google.com/signup-faqs
 - https://docs.cloud.google.com/run/docs/container-contract

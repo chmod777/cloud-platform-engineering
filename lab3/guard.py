@@ -1,4 +1,4 @@
-"""Limiter les opérations aux ressources du LAB 3 dans son état isolé."""
+"""Restrict operations to Lab 3 resources in its isolated state."""
 import json
 import sys
 
@@ -12,19 +12,19 @@ allowed = {
         'run.googleapis.com', 'artifactregistry.googleapis.com', 'iam.googleapis.com')],
 }
 if plan.get('errored') or plan.get('complete') is False or ('resource_changes' not in plan and not ('planned_values' in plan and plan.get('applyable') is False)):
-    sys.exit('Plan incomplet : refus.')
+    sys.exit('Incomplete plan: rejected.')
 for change in plan.get('resource_changes', []):
     actions = change['change']['actions']
     if actions == ['no-op']:
         continue
     if change['address'] not in allowed:
-        sys.exit('Ressource hors LAB 3 : refus.')
+        sys.exit('Resource outside Lab 3: rejected.')
     permitted = [['delete']] if mode == 'clean' else [['create']]
     if actions not in permitted:
-        sys.exit('Modification/remplacement inattendu : refus. Examiner manuellement.')
+        sys.exit('Unexpected update or replacement: rejected. Review manually.')
     after = change['change'].get('after') or {}
     if after.get('project') not in (None, 'cloud-platform-engineering-hs'):
-        sys.exit('Projet inattendu : refus.')
+        sys.exit('Unexpected project: rejected.')
     if mode == 'prepare' and change['address'].startswith('google_cloud_run'):
-        sys.exit('Déploiement interdit pendant prepare.')
-print('Périmètre et actions du plan validés.')
+        sys.exit('Deployment is not allowed during prepare.')
+print('Plan scope and actions validated.')
