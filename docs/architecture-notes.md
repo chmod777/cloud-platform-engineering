@@ -85,3 +85,25 @@ These are proposed improvements, not delivered features.
   services and billing were not exhaustively audited in the foundation labs.
 - These development labs do not establish production readiness, high
   availability, or completion of a security audit.
+
+
+## Labs 5-7: network policy, secret access and keyless planning
+
+- [Lab 5](lab-05-private-networking.md): a default internet route did not provide
+  private-VM egress. Extending the existing HTTPS source range restored Belgium
+  to Paris connectivity; NAT enabled external HTTPS, and an independent egress
+  firewall blocked HTTP. Temporary resources were deleted.
+- [Lab 6](lab-06-least-privilege-secrets.md): an impersonated dedicated workload
+  read exactly one secret, while a second read, a version write and project
+  listing were denied. Positive access distinguishes identity validity from
+  a negative result caused by failed authentication. Test resources were deleted.
+- [Lab 7](lab-07-keyless-ci.md): GitHub OIDC claims bind trust to numeric owner
+  and repository IDs, `master`, manual dispatch and a specific workflow path.
+  Only Lab 3 uses GCS state. Public pull requests run without cloud credentials.
+  CI has no infrastructure apply permission; its state-object access is still
+  security-sensitive and requires trusted workflow changes.
+
+Interview discussion: distinguish NAT from egress policy; a secret accessor
+from a project viewer; an OIDC identity from the resulting impersonated account;
+state isolation from code-file organization; and a successful plan from a
+verified deployment. No automatic billing cap is claimed.

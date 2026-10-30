@@ -37,3 +37,9 @@ __pycache__/
 lab3/.venv/
 lab3/.pytest_cache/
 lab3/.session-lock/
+
+# Short-lived GitHub federation files and new lab locks
+gha-creds-*.json
+lab5/.session-lock/
+lab6/.session-lock/
+lab7/.session-lock/

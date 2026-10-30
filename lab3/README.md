@@ -124,3 +124,11 @@ does not cancel costs already incurred.
 - https://cloud.google.com/signup-faqs
 - https://docs.cloud.google.com/run/docs/container-contract
 - https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service
+
+## Backend update from Lab 7
+
+The historical session used local state. The current root now uses the dedicated
+GCS backend configured in `infra/backend.tf`. The empty Lab 3 state was migrated
+without moving foundation resources. See [Lab 7](../docs/lab-07-keyless-ci.md)
+for bootstrap access and CI boundaries. Do not initialize a replacement empty
+backend when restoring an existing deployment; recover the correct state first.

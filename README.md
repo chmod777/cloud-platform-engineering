@@ -3,7 +3,8 @@
 A collection of hands-on Google Cloud infrastructure labs, built with Terraform.
 The project demonstrates private VM administration, network troubleshooting,
 controlled infrastructure lifecycle management, authenticated serverless API
-deployment, and hybrid container delivery to OpenShift. Each lab records
+deployment, hybrid container delivery to OpenShift, controlled egress, secret-level IAM,
+and keyless infrastructure planning. Each lab records
 architecture decisions, observed results, and implementation limits.
 
 ## Labs and evidence
@@ -14,6 +15,10 @@ architecture decisions, observed results, and implementation limits.
 | [Lab 2 - Controlled VM lifecycle](docs/lab-02-vm-lifecycle.md) | Optional VM, Terraform plan validation, permanent resource protection, shell scripts | Live creation, repeated start plan with no changes, IAP SSH, empty cleanup inventory, repeated stop plan with no changes; seven plan guard tests |
 | [Lab 3 - Containerized API on Cloud Run](docs/lab-03-cloud-run.md) | FastAPI, Docker, Artifact Registry, Cloud Run, IAM, isolated Terraform state | Local container checks, authenticated HTTP 200, anonymous HTTP 403, application logs, verified resource cleanup; nine automated tests |
 | [Lab 4 - Private registry to OpenShift](docs/lab-04-hybrid-openshift.md) | Private Artifact Registry, Developer Sandbox, temporary OAuth pull credentials, SCC/RBAC, scaling and rollbacks | Operator-reported HTTPS checks, two pods on two nodes, rolling update/rollback, restricted-v2 process checks and cleanup |
+
+| [Lab 5 - Private networking and controlled egress](docs/lab-05-private-networking.md) | Cross-region private HTTPS, source-range diagnosis, subnet-scoped NAT, HTTPS-only egress | Timeout/HTTP 200 transitions, denied outbound HTTP, scoped cleanup |
+| [Lab 6 - Least-privilege secrets](docs/lab-06-least-privilege-secrets.md) | Dedicated workload identity, short-lived impersonation, secret-level IAM | Allowed payload match; denied second-secret read, version write and project listing; cleanup |
+| [Lab 7 - Keyless CI planning](docs/lab-07-keyless-ci.md) | GitHub OIDC federation, restricted claims, GCS state, credential-free PR checks | See report for current CI validation and apply restrictions |
 
 [Architecture and operational notes](docs/architecture-notes.md) connect the implementation
 to product concepts, design tradeoffs, and questions to discuss.
@@ -54,8 +59,10 @@ The development project is `cloud-platform-engineering-hs`. The current design
 keeps Lab 1/2 permanent resources and the temporary VM in **one local Terraform state**.
 Separate files provide a clear code boundary; independent states are a future
 migration, requiring a verified backup and an explicit migration procedure.
-Lab 3 starts with its own local state in `lab3/infra`; it does not migrate or
-manage the existing foundation resources.
+Lab 3 started with its own local state. Lab 7 migrates only that verified-empty
+state to a dedicated GCS backend, prefix `lab3`; it does not migrate or manage
+foundation resources. Labs 5 and 6 and the Lab 7 bootstrap have separate local
+states. No shared Terraform modules exist in this repository.
 
 The VM is disabled by default (`lab_enabled = false`). Permanent resources have
 `prevent_destroy`; that protection depends on keeping the corresponding resource
@@ -144,13 +151,14 @@ The seven guard tests cover no-op plans, permitted VM deletion, rejected network
 changes, rejected VM replacement, retained disks, attached disks, and incomplete
 plans. They complement the live lifecycle session documented in Lab 2.
 
-## Known limitations and next steps
+## Current boundaries and limitations
 
-- Labs 1/2 share a local state; Lab 3 has a separate local state. No remote backend yet.
-- The HTTPS firewall rule allows `10.10.2.0/24`; the Belgian VM uses `10.10.3.0/24`.
-  Application connectivity from Belgium has not been implemented or validated.
+- Labs 1/2 retain local state; only Lab 3 uses the dedicated GCS backend.
+- The HTTPS firewall rule now allows both management subnet CIDRs; Lab 5
+  verified Belgian-to-Paris private HTTPS.
 - No automatic shutdown, billing enforcement, or project-wide resource cleanup.
-- No CI workflow yet. Lab 3 has completed one application deployment and cleanup cycle.
+- CI cloud access is plan-only, manually dispatched on `master`; no CI apply job
+  or infrastructure write role exists. Lab 3 remains cleaned up.
 - This is a development lab with recorded evidence, not a production readiness claim.
 
 ## Run Lab 3 - Docker & Cloud Run
@@ -192,3 +200,14 @@ rebuild the Lab 3 application and publish a new digest before rendering the
 [OpenShift manifests](lab4/manifests/workload.yaml). The guide covers temporary
 OAuth image-pull credentials, HTTPS checks, scaling, rollout/rollback, RBAC/SCC
 verification and scoped cleanup. No live resources are retained.
+
+## Run Labs 5, 6 and 7
+
+Read the full [networking report](docs/lab-05-private-networking.md),
+[secret authorization report](docs/lab-06-least-privilege-secrets.md), and
+[keyless CI guide](docs/lab-07-keyless-ci.md). Each describes state boundaries,
+reviewed plans, observed evidence and cleanup. Labs 5/6 keep no live workloads.
+The Lab 7 state bucket and federation remain for future plans; bucket storage
+and operations can incur small charges. Repository visibility is public by the
+operator's explicit choice on 30 October 2026. Public PR checks receive no cloud
+credentials; private state and saved plans are never uploaded as artifacts.

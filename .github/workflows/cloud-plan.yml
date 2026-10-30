@@ -1,0 +1,55 @@
+name: Keyless Lab 3 plan
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lab3-terraform-state
+  cancel-in-progress: false
+jobs:
+  plan:
+    if: github.repository == 'chmod777/cloud-platform-engineering' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/565473613966/locations/global/workloadIdentityPools/lab7-github/providers/github
+          service_account: lab7-terraform-plan@cloud-platform-engineering-hs.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_lifetime: 300s
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.17.0
+          terraform_wrapper: false
+      - name: Validate and plan against the actual isolated backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          private_dir=$(mktemp -d)
+          trap 'rm -rf "$private_dir"' EXIT
+          terraform -chdir=lab3/infra init -input=false -lockfile=readonly > "$private_dir/init.log" 2>&1 || { echo 'Backend initialization failed; private output suppressed.'; exit 1; }
+          terraform -chdir=lab3/infra validate -no-color
+          terraform -chdir=lab3/infra plan -input=false -lock-timeout=30s -var=deploy=false -out="$private_dir/plan" > "$private_dir/plan.log" 2>&1 || { echo 'Cloud plan failed; private output suppressed.'; exit 1; }
+          terraform -chdir=lab3/infra show -json "$private_dir/plan" > "$private_dir/plan.json"
+          python3 lab3/guard.py prepare "$private_dir/plan.json"
+          python3 - "$private_dir/plan.json" <<'PY'
+          import json, os, sys
+          p = json.load(open(sys.argv[1]))
+          counts = {}
+          for r in p.get('resource_changes', []):
+              action = '/'.join(r['change']['actions'])
+              counts[action] = counts.get(action, 0) + 1
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write('Validated Lab 3 prepare plan. Action counts: ' + str(counts) + '\n\nNo apply was executed. Private plan and state are not uploaded.\n')
+          PY
+      # Deliberately no apply job: the CI identity has no infrastructure write role.

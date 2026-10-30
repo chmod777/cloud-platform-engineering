@@ -33,7 +33,7 @@ resource "google_compute_firewall" "allow_mgmt_to_app" {
   direction = "INGRESS"
   priority  = 1000
 
-  source_ranges = ["10.10.2.0/24"]
+  source_ranges = ["10.10.2.0/24", "10.10.3.0/24"]
   target_tags   = ["app-server"]
 
   allow {
@@ -41,5 +41,5 @@ resource "google_compute_firewall" "allow_mgmt_to_app" {
     ports    = ["443"]
   }
 
-  description = "Allow HTTPS from management subnet to application servers"
+  description = "Allow HTTPS from Paris and Belgian management subnets to application servers"
 }

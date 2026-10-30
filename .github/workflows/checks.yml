@@ -1,0 +1,41 @@
+name: Repository checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.17.0
+          terraform_wrapper: false
+      - name: Terraform format and validation without cloud credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          terraform fmt -check -recursive
+          for root in terraform/environments/dev lab3/infra lab5/infra lab6/infra lab7/bootstrap; do
+            terraform -chdir="$root" init -backend=false -input=false -lockfile=readonly
+            terraform -chdir="$root" validate -no-color
+          done
+      - name: Lifecycle guard tests and shell syntax
+        run: |
+          python3 -m unittest discover -s tests -v
+          bash -n scripts/lab scripts/lab-start scripts/lab-stop scripts/lab-status lab3/lifecycle lab5/https-server.sh lab5/probe.sh
+      - name: API and Lab 3 plan guard tests
+        run: |
+          python3 -m venv /tmp/lab3-tests
+          /tmp/lab3-tests/bin/pip install -r lab3/requirements-dev.txt
+          cd lab3
+          /tmp/lab3-tests/bin/python -m pytest app_tests -v
