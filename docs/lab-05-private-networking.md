@@ -87,6 +87,7 @@ firewall changes by design.
 | External HTTPS from Paris | HTTP 000, curl exit 28; Paris subnet excluded from NAT |
 | Temporary resource plans | Initial two creates; NAT four creates and one probe tag update |
 | Cleanup apply | Six resources deleted from Lab 5 state; boot disks auto-deleted |
+| Final verification | Empty project instance, disk, router and reserved-address inventories; empty Lab 5 state; no-change foundation plan |
 
 The first IAP attempts occurred before guest SSH was ready. Subsequent failures
 were caused by a passphrase-protected local key without an interactive prompt;

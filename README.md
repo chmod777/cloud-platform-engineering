@@ -18,7 +18,7 @@ architecture decisions, observed results, and implementation limits.
 
 | [Lab 5 - Private networking and controlled egress](docs/lab-05-private-networking.md) | Cross-region private HTTPS, source-range diagnosis, subnet-scoped NAT, HTTPS-only egress | Timeout/HTTP 200 transitions, denied outbound HTTP, scoped cleanup |
 | [Lab 6 - Least-privilege secrets](docs/lab-06-least-privilege-secrets.md) | Dedicated workload identity, short-lived impersonation, secret-level IAM | Allowed payload match; denied second-secret read, version write and project listing; cleanup |
-| [Lab 7 - Keyless CI planning](docs/lab-07-keyless-ci.md) | GitHub OIDC federation, restricted claims, GCS state, credential-free PR checks | See report for current CI validation and apply restrictions |
+| [Lab 7 - Keyless CI planning](docs/lab-07-keyless-ci.md) | GitHub OIDC federation, restricted claims, GCS state, credential-free PR checks | Linux checks and five-create cloud plan passed; non-master federation rejected; CI apply blocked |
 
 [Architecture and operational notes](docs/architecture-notes.md) connect the implementation
 to product concepts, design tradeoffs, and questions to discuss.

@@ -133,3 +133,10 @@ No remote state backend or CI/CD workflow is implemented.
 - [Cloud Run container contract](https://docs.cloud.google.com/run/docs/container-contract)
 - [Terraform Cloud Run v2 resource](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service)
 - [Google Cloud free trial billing rules](https://cloud.google.com/signup-faqs)
+
+
+## Subsequent backend change
+
+The session evidence above remains historical. [Lab 7](lab-07-keyless-ci.md)
+later migrated the cleaned-up Lab 3 root to its own GCS backend and verified
+keyless CI planning. Foundation state was not migrated.

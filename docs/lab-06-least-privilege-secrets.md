@@ -65,6 +65,7 @@ Each verifier rerun adds fresh canary versions; clean up afterward.
 | Workload adds a version to `lab6-allowed` | PERMISSION_DENIED |
 | Workload lists project secrets | PERMISSION_DENIED |
 | IAM policy inspection | Secret accessor on allowed secret only; Token Creator on dedicated account only |
+| Cleanup | Six tracked resources deleted; subsequent matching secret/account inventories and state list empty |
 
 Initial impersonation failed while the new bindings propagated. A later allowed
 read succeeded, but an early binary-output comparison failed. The verifier was

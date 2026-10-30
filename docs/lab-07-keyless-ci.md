@@ -4,8 +4,8 @@
 
 Authenticate GitHub Actions to Google Cloud using Workload Identity Federation,
 validate the actual repository roots, and plan against the real Lab 3 state.
-Do not create or store a service-account JSON key. Live CI validation is recorded
-below when completed; configuration alone is not evidence of successful federation.
+Do not create or store a service-account JSON key. Live CI checks, a cloud plan
+and a rejected untrusted-branch authentication were verified on 30 October 2026.
 
 ## Architecture
 
@@ -36,7 +36,8 @@ must create/delete lock objects. This permits modification of this bucket's
 state objects: the identity is read-only for infrastructure APIs, not for state.
 Only this isolated lab's state belongs in the bucket. Never store secrets there.
 
-The custom project role contains only get/list permissions for Lab 3 resource
+The workflow also checks effective project permissions using the non-mutating
+[permission probe](../lab7/check-permissions.py). The custom project role contains only get/list permissions for Lab 3 resource
 types, Service Usage and project metadata. It can read those resource types
 across this portfolio project; it does not write infrastructure, read Secret
 Manager payloads or grant IAM. No role is granted in Technical Copilot or on the
@@ -101,8 +102,36 @@ write permissions. Those capabilities are deliberately not granted here.
 
 ## Actual observed evidence
 
-Live checks are in progress. Successful results and run URLs will be added only
-after the workflows complete.
+| Check on 30 October 2026 | Observation |
+|---|---|
+| [Repository checks](https://github.com/chmod777/cloud-platform-engineering/actions/runs/41033487379) | Success on commit `b9df0cf`: all five roots validate on Linux, formatting and shell checks pass, seven lifecycle tests and nine API/Lab 3 guard tests pass |
+| [Keyless cloud plan](https://github.com/chmod777/cloud-platform-engineering/actions/runs/41033487282) | Success on `b9df0cf`: OIDC exchange, 300-second access token, actual GCS backend initialization, state locking, validation and plan guard all passed |
+| Guarded prepare plan | Exactly five create actions; no apply executed and no Cloud Run service planned |
+| Effective permission inspection | `projects.testIamPermissions` returned the expected project-read permission and none of the tested Cloud Run create, registry create, service-account create, project IAM write or secret payload permissions |
+| [Untrusted-branch test](https://github.com/chmod777/cloud-platform-engineering/actions/runs/41033368479) | Authentication failed at Google STS with `unauthorized_client`: credential rejected by the attribute condition |
+| No persistent key | User-managed key inventory for the CI service account returned no entries |
+| Backend inventory | One 457-byte current state object, no lingering lock object; Lab 3 resource list remains empty |
+| Bootstrap convergence | Live plan reported no changes |
+
+The untrusted-branch test temporarily removed only the workflow's local master
+job gate on a test branch so that Google, rather than a skipped GitHub job,
+would evaluate the token. Both ref and workflow-ref claims differed from the
+allowed values, so this proves rejection of that combined untrusted context;
+it does not isolate every claim independently. The default branch policy was
+unchanged and the temporary remote branch was deleted afterward.
+
+The first Linux runs authenticated successfully but failed provider validation
+because the existing lock recorded only the Mac package content hash. Terraform
+retrieved signed checksums for `darwin_arm64` and `linux_amd64`; the Linux hash
+was added to all five identical provider locks, retaining version 7.46.2. The
+subsequent checks and cloud plans passed. The first workflow dispatch also
+returned 404 while GitHub indexed the new workflow; retry after registration
+succeeded. These initial failures are retained in GitHub run history.
+
+The permission check is non-mutating introspection, not a series of attempted
+resource creations. Empty Lab 3 state means the plan validates creation intent
+and backend access, not refresh of a running Cloud Run service. No production
+apply or deployment is claimed.
 
 ## Cleanup and retained resources
 

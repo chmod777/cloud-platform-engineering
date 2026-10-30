@@ -118,3 +118,10 @@ zero billing. Never destroy Lab 1/2 state or delete the shared Sandbox namespace
 - [Red Hat: SCC strategies and namespace UID allocation (OpenShift 4.11)](https://docs.redhat.com/en/documentation/openshift_container_platform/4.11/html/authentication_and_authorization/managing-pod-security-policies)
 
 Consult documentation matching the current Sandbox version before rerunning.
+
+
+## Subsequent backend change
+
+The session evidence above remains historical. [Lab 7](lab-07-keyless-ci.md)
+later migrated the cleaned-up Lab 3 root to its own GCS backend and verified
+keyless CI planning. Foundation state was not migrated.
